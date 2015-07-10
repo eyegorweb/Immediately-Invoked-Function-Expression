@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    <meta charset="UTF-8">
+    <title>ENCAPSULATION DE VARIABLES ET IEF</title>
+    <script type="text/javascript" src="iife.js"></script>
+  </head>
+  
+  <body>
+    
+    <div>
+      
+      <h1>ENCAPSULATION DE VARIABLES ET IIEF</h1>
+      
+      <p>
+        La portée des variables en Javascript peut être gérée très efficacement à l'aide de fonctions dites anonymes.
+      </p>
+      
+      <p>
+        Les fonctions anonymes sont régulièrement utilisées en JavaScript et permettent d'encapsuler du code à l'intérieur du corps d'une fonction, et ainsi d'isoler toutes les propriétés et méthodes qui s'y trouvent. Cela permet notamment de contourner les problèmes liés aux collisions de variables déclarées dans le scope global, problèmes récurrents dès lors qu'on a à faire à du code conséquent. C'est également un procédé qui peut se révéler indispensable lorsqu'on on essaye de passer une valeur à l'intérieur d'une boucle ou lors de l'appel d'une fonction récursive.
+        En programmation, et pas seulement en JavaScript, c'est ce que l'on appelle communément des closures.
+        A titre informatif, C# implémente les méthodes anonymes/Lambdas depuis quelques temps déjà, et PHP, depuis sa version 5.3, propose également une implémentation des closures.
+        Et donc, cela se fait en déclarant une variable sans nom. Mais comment ?!
+      </p>
+      
+      <h2>ENCAPSULATION DANS UNE VARIABLE</h2>
+      
+      <p>
+        La façon de procéder la plus simple consiste à encapsuler une fonction anonyme dans une variable.
+      </p>
+      
+      <script type="text/javascript">
+        var myAnonymousFunction = function() {
+          console.log('myAnonymousFunction is called');
+        }
+      </script>
+      
+      <p>
+        La fonction ne porte pas de nom, et sera exécutée lors de l'appel de la variable myAnonymousFunction(). Notez la présence des parenthèses, car oui, l'exécution est toujours liée à l'opérateur () ! Si on ne souhaite pas exécuter la fonction, il suffit de passer la variable sans les parenthèses, mais cela n'a pas forcmément beaucoup d'intérêt.
+        Si on veut exécuter le code de la fonction anonyme, on appelle la variable de la manière suivante :
+      </p>
+      
+      <script type="text/javascript">
+        myAnonymousFunction();
+      </script>
+      
+      <p>
+        Un détournement de cette façon de faire peut se révéler très intéressant pour créer un pseudo système de namespace en JavaScript. Simplement en n'assignant pas une fonction anonyme à la variable, mais plutôt un objet littéral, comme ceci :
+      </p>
+      
+      <script type="text/javascript">
+        var myNamespace = {
+          // Code here
+        };
+      </script>
+      
+      <p>
+        C'est une technique que j'aime beaucoup utiliser lors de mes développements JS, car elle apporte pas mal de portabilité, de maintenabilité et de robustesse. Pour plus d'informations à ce sujet vous pouvez lire l'article comment utiliser un namespace en JavaScript.
+      </p>
+      
+      <h2>IMMEDIATELY EXECUTED FUNCTION</h2>
+      
+      <p>
+        Les IEF sont couramment utilisées pour développer une fonctionnalité ou un ensemble de fonctionnalités qui seront déclenchées sans qu'il soit nécessaire d'appeler la fonction anonyme, ce qui serait de toute façon impossible dans la mesure où la fonction ne porte pas de nom.
+        Une IEF n'est donc exécutée qu'au moment où elle est parsée. La référence est ensuite détruite et notre fonction ne sert plus à rien, ce qui n'est pas très grave puisqu'elle n'était pas destinée à être réutilisée, autrement nous aurions utilisé une fonction classique.
+      </p>
+  
+      <script type="text/javascript">
+        (function(){
+           // Code here
+        })();
+      </script>
+      
+      <p>
+        Grâce aux parenthèse englobant la fonction, le parseur va interprêter le code non pas comme une déclaration de fonction, mais bien comme une expression de fonction. Dès qu'il rencontrera un autre couple de parenthèses après cette expression de fonction, il exécutera le code précédent sans qu'il soit nécessaire d'appeler une fonction explicitement, directement dans le flux du code. Si vous ne précisez pas ces parenthèses après la fonction anonyme, votre code ne sera pas exécuté. C'est ainsi que les puristes parlent plutôt, à juste titre, d'IIEF pour Immediately Invoked Execution Fonction, "Expression de fonction immédiatement invoquée" en français dans le texte.
+        Bien évidemment, la portée des variables reste interne à la fonction. C'est d'ailleurs là toute l'utilité des fonctions anonymes : permettre l'utilisation de variables globales en son sein tout en isolant les variables y étant déclarées. Le scope global n'accède pas à notre code, et nous accédons au scope global.
+        Exemple par la pratique :
+      </p>
+      
+      <script type="text/javascript">
+        var test_1 = 'Hello';
+        (function(){
+           console.log(test_1); // Hello
+           var test_2 = 'World';
+           console.log(test_2); // World
+        })();
+        console.log(test_2); // not defined
+      </script>
+    
+      <p>
+        On comprend aisément tout l'intéret d'isoler complètement certaines parties de code pour éviter les conflits avec d'autres variables déclarées dans le scope global. Mais ce n'est pas tout, les closures peuvent rendre de précieux services dans des situations bien précises ...
+      </p>
+      
+      <h2>CLOSURES, CALLBACK ET RÉCURSIVITÉ</h2>
+  
+      <p>
+        Voici deux cas d'école auxquels vous serez confrontés un jour où l'autre, si ça n'a pas encore été le cas.
+        Imaginons que vous vouliez transmettre un incrément dans une boucle, qui assigne un écouteur d'évènement sur chaque élément d'une collection - par exemple, et que pour ce faire vous utilisiez une fonction de callback, comme ça :
+      </p>
+      
+      <script type="text/javascript">
+        for(var i = 0; i < elements.length; i++) {
+        
+            addEvent(elements[i], 'click', function() {
+                focused = elements[i];
+                insertSuggestion(); 
+            }); 
+        }
+      </script>
+      
+      <p>
+        Le but est bien de récupérer l'élément se trouvant dans le tableau elements à l'index i pour l'assigner à une propriété lorsque l'élément sera cliqué. Sauf que vous pourrez toujours boucler, i vaudra toujours elements.length, et la fonction de callback restera inopérante. Pourquoi ce mystère ?! Simplement parce que i est accessible partout dans le scope local et est partagé avec la fonction de callback. De fait, au sortir de la boucle, i vaut elements.length ! Si vous n'êtes pas au fait de ce genre de cas de portée des variables, vous pouvez toujours vous gratter les cheveux pour essayer de comprendre pourquoi cette simplissime instruction ne fonctionne pas.
+        C'est là qu'une fonction anonyme va se révéler des plus intéressantes. En exécutant une telle fonction de callback, on va pouvoir s'assurer de l'imperméabilité du scope et y faire ce qu'on a à faire pour transmettre la valeur de i à chaque tour de boucle. i est passé en paramètre de la fonction anonyme qui retourne elle-même le résultat de l'encapsulation des instructions qui s'y trouvent. Comme la valeur de i est récupérée à chaque tour de boucle, on obtient bien le résultat attendu.
+      </p>
+      
+      <script type="text/javascript">
+        for(var i = 0; i < elements.length; i++) {
+          addEvent(elements[i], 'click', (function(i) {
+            return function() {
+              focused = elements[i];
+              insertSuggestion();
+            }; 
+          })(i)); 
+        }
+      </script>
+      
+      <p>
+        Bien que ça soit un peu sale d'encapsuler une fonction anonyme dans une autre fonction anonyme, c'est de toute beauté.
+        Un autre cas délicat peut être illustré lors de l'utilisation d'une fonction récursive, c'est-à-dire une fonction qui s'appelle elle-même. La fonction animator() est chargée de masque progressivement un élément un décrémentant son opacité tant qu'elle est supérieure à 0. Pour arriver à ce tour de passe-passe, la fonction native setTimeout() est lancée après un délai de 50 millisecondes et rappelle ainsi la fonction qui la contient. Problème : la valeur du paramètre elm doit être passée en paramètre de la fonction : nous nous retrouvons avec un problème de portée de variable, et ceci ne fonctionnera pas :
+      </p>
+      
+      <script type="text/javascript">
+        animator= function(elm) {
+          var progress = elm.style.opacity = parseFloat(elm.style.opacity) - 0.1;
+          if(progress > 0)
+          {
+            setTimeout(animator(elm), 50);
+          }     
+        }
+        
+        animator(elm);
+      </script>
+      
+      <p>
+        Le paramètre elm est en effet accesible dans toute la fonction, et sa valeur ne change en fait jamais. Là encore, une fonction anonyme peut nous sortir du désespoir pour transmettre une valeur "cloisonnée", lors de chaque appel récursif :
+      </p>
+      
+      <script type="text/javascript">
+        animator= function(elm) {
+          var progress = elm.style.opacity = parseFloat(elm.style.opacity) - 0.1;
+          if(progress > 0)
+          {
+            setTimeout((function() {
+              animator(elm);
+            }), 50);
+          }     
+        }
+        
+        animator(elm);
+      </script>
+      
+      <p>
+        Comme on peut le voir les fonctions sont partout en JavaScript et, parfois, elles sont anonymes. Ce procédé d'encapsulation/closure permet de faire énormément de choses qui seraient impossibles autrement et il y a fort à parier que vous en rencontriez souvent lors de vos développements.
+        Pour des informations plus détaillées sur le sujet, je vous invite à étudier l'excellent article de Ben Alman consacré aux IIEF ou encore celui de Jean-Pierre Vincent consacré à l'usage des fonctions en JavaScript. N'hésitez pas non plus à consulter la documentation MDN.
+      </p>
+    </div>
+  </body>
+</html>
